@@ -1,4 +1,5 @@
 com\auction\models\Transaction.class
+com\auction\test\SoldProductsDebugTest.class
 com\auction\database\DatabaseConnection.class
 com\auction\exceptions\DatabaseException.class
 com\auction\test\FixSoldProductsTest.class
@@ -21,9 +22,12 @@ com\auction\models\Admin.class
 com\auction\exceptions\AuctionException.class
 com\auction\services\UserService.class
 com\auction\test\AuthenticationTest.class
+com\auction\test\TableAlignmentTest.class
 com\auction\services\impl\TransactionServiceImpl.class
 com\auction\services\impl\BuyerServiceImpl.class
 com\auction\services\ProductService.class
+com\auction\test\AuctionTimeResetTest.class
+com\auction\test\AuctionTimeAndTableTest.class
 com\auction\models\Buyer.class
 com\auction\utils\InputUtils.class
 com\auction\test\ProductUpdateTest.class

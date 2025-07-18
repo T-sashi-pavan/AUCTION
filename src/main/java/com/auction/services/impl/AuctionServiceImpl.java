@@ -1,21 +1,24 @@
 package com.auction.services.impl;
 
-import com.auction.services.AuctionService;
-import com.auction.models.Auction;
-import com.auction.models.Bid;
-import com.auction.exceptions.DatabaseException;
-import com.auction.exceptions.AuctionException;
-import com.auction.database.DatabaseConnection;
-import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoDatabase;
-import org.bson.Document;
-import org.bson.types.ObjectId;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.mongodb.client.model.Filters.*;
+import org.bson.Document;
+import org.bson.types.ObjectId;
+
+import com.auction.database.DatabaseConnection;
+import com.auction.exceptions.AuctionException;
+import com.auction.exceptions.DatabaseException;
+import com.auction.models.Auction;
+import com.auction.models.Bid;
+import com.auction.services.AuctionService;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
+import static com.mongodb.client.model.Filters.and;
+import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Filters.lt;
+import static com.mongodb.client.model.Filters.ne;
 import static com.mongodb.client.model.Sorts.descending;
 
 /**
@@ -175,6 +178,14 @@ public class AuctionServiceImpl implements AuctionService {
             auction.setCurrentHighestBidderId(bid.getBidderId());
             auction.setTotalBids(auction.getTotalBids() + 1);
             
+            // **AUCTION TIME RESET FEATURE** - Reset auction end time when a bid is placed
+            // Use the stored original duration instead of calculating it
+            long originalDurationMinutes = auction.getDurationMinutes();
+            
+            // Set new end time to current time + original duration
+            LocalDateTime newEndTime = LocalDateTime.now().plusMinutes(originalDurationMinutes);
+            auction.setEndTime(newEndTime);
+            
             // Mark previous bids as not winning
             bidCollection.updateMany(
                 and(eq("auctionId", bid.getAuctionId()), ne("_id", bid.getId())),
@@ -291,7 +302,8 @@ public class AuctionServiceImpl implements AuctionService {
                 .append("isActive", auction.isActive())
                 .append("isCompleted", auction.isCompleted())
                 .append("status", auction.getStatus())
-                .append("totalBids", auction.getTotalBids());
+                .append("totalBids", auction.getTotalBids())
+                .append("durationMinutes", auction.getDurationMinutes());
         
         // Convert LocalDateTime to Date for MongoDB storage
         if (auction.getStartTime() != null) {
@@ -352,6 +364,14 @@ public class AuctionServiceImpl implements AuctionService {
         }
         
         auction.setTotalBids(doc.getInteger("totalBids", 0));
+        
+        // Handle durationMinutes with proper type conversion
+        Object durationObj = doc.get("durationMinutes");
+        if (durationObj instanceof Number) {
+            auction.setDurationMinutes(((Number) durationObj).longValue());
+        } else {
+            auction.setDurationMinutes(60L); // Default to 60 minutes if not set
+        }
         
         return auction;
     }

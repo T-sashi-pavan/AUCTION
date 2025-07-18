@@ -1,25 +1,24 @@
 package com.auction.services.impl;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import com.auction.exceptions.AuctionException;
+import com.auction.exceptions.DatabaseException;
+import com.auction.models.Auction;
+import com.auction.models.Bid;
+import com.auction.models.Buyer;
+import com.auction.models.Product;
+import com.auction.models.Seller;
+import com.auction.models.Transaction;
+import com.auction.services.AuctionService;
 import com.auction.services.BuyerService;
 import com.auction.services.ProductService;
 import com.auction.services.TransactionService;
 import com.auction.services.UserService;
-import com.auction.services.AuctionService;
-import com.auction.models.Buyer;
-import com.auction.models.Product;
-import com.auction.models.Transaction;
-import com.auction.models.Auction;
-import com.auction.models.Bid;
-import com.auction.models.Seller;
-import com.auction.exceptions.DatabaseException;
-import com.auction.exceptions.AuctionException;
 import com.auction.utils.InputUtils;
-import org.bson.types.ObjectId;
-
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.stream.Collectors;
 
 /**
  * Implementation of BuyerService interface
@@ -78,21 +77,22 @@ public class BuyerServiceImpl implements BuyerService {
                 return;
             }
             
-            System.out.println("ID\t\tName\t\t\tPrice\t\tCondition\tQuantity\tSeller");
-            System.out.println("=" .repeat(100));
+            System.out.printf("%-15s %-20s %-16s %-18s %-12s %-15s%n", 
+                "ID", "Name", "Price", "Condition", "Quantity", "Seller");
+            System.out.println("=" .repeat(110));
             
             for (Product product : availableProducts) {
                 // Get seller name
                 Seller seller = (Seller) userService.findUserById(product.getSellerId().toString());
                 String sellerName = seller != null ? seller.getFullName() : "Unknown";
                 
-                System.out.printf("%-15s %-20s $%-10.2f %-15s %-8d %s%n",
+                System.out.printf("%-15s %-20s $%-15.2f %-18s %-12d %-15s%n",
                     product.getId().toString().substring(0, 8) + "...",
-                    product.getName().length() > 20 ? product.getName().substring(0, 17) + "..." : product.getName(),
+                    product.getName().length() > 18 ? product.getName().substring(0, 15) + "..." : product.getName(),
                     product.getPrice(),
                     product.getCondition(),
                     product.getQuantity(),
-                    sellerName);
+                    sellerName.length() > 13 ? sellerName.substring(0, 10) + "..." : sellerName);
             }
             
             System.out.println("\nTotal available products: " + availableProducts.size());
@@ -125,7 +125,7 @@ public class BuyerServiceImpl implements BuyerService {
             for (Seller seller : sellers) {
                 List<Product> products = productService.getProductsBySellerId(seller.getId().toString());
                 
-                System.out.printf("%-15s %-20s %-25s %-15s %-8d %.1f/5.0\t%s%n",
+                System.out.printf("%-15s %-20s %-25s %-15s %-24d %.1f/5.0\t%s%n",
                     seller.getId().toString().substring(0, 8) + "...",
                     seller.getFullName(),
                     seller.getEmail(),
@@ -176,15 +176,16 @@ public class BuyerServiceImpl implements BuyerService {
             
             System.out.println("\n=== PURCHASE PRODUCT ===");
             System.out.println("Available Products:");
-            System.out.println("No.\tID\t\tName\t\t\tCategory\t\tPrice\t\tCondition\tQuantity");
-            System.out.println("=" .repeat(120));
+            System.out.printf("%-4s %-15s %-20s %-15s %-16s %-18s %-8s%n", 
+                "No.", "ID", "Name", "Category", "Price", "Condition", "Quantity");
+            System.out.println("=" .repeat(130));
             
             for (int i = 0; i < availableProducts.size(); i++) {
                 Product product = availableProducts.get(i);
-                System.out.printf("%d.\t%-15s %-20s %-15s $%-10.2f %-15s %d%n",
+                System.out.printf("%-4d %-15s %-20s %-15s $%-15.2f %-18s %-8d%n",
                     i + 1,
                     product.getId().toString().substring(0, 8) + "...",
-                    product.getName().length() > 20 ? product.getName().substring(0, 17) + "..." : product.getName(),
+                    product.getName().length() > 18 ? product.getName().substring(0, 15) + "..." : product.getName(),
                     product.getCategory(),
                     product.getPrice(),
                     product.getCondition(),
@@ -494,7 +495,8 @@ public class BuyerServiceImpl implements BuyerService {
                 return;
             }
             
-            System.out.println("ID\t\tProduct\t\tStarting Price\tCurrent Bid\tBids\tTime Left");
+            System.out.printf("%-15s %-20s %-16s %-16s %-8s %-15s%n", 
+                "ID", "Product", "Starting Price", "Current Bid", "Bids", "Time Left");
             System.out.println("=" .repeat(100));
             
             for (Auction auction : activeAuctions) {
@@ -505,9 +507,9 @@ public class BuyerServiceImpl implements BuyerService {
                 LocalDateTime now = LocalDateTime.now();
                 String timeLeft = getTimeLeft(now, auction.getEndTime());
                 
-                System.out.printf("%-15s %-15s $%-12.2f $%-12.2f %-6d %s%n",
+                System.out.printf("%-15s %-20s $%-15.2f $%-15.2f %-8d %-15s%n",
                     auction.getId().toString().substring(0, 8) + "...",
-                    productName.length() > 15 ? productName.substring(0, 12) + "..." : productName,
+                    productName.length() > 18 ? productName.substring(0, 15) + "..." : productName,
                     auction.getStartingPrice(),
                     auction.getCurrentHighestBid(),
                     auction.getTotalBids(),
@@ -533,7 +535,8 @@ public class BuyerServiceImpl implements BuyerService {
             
             System.out.println("\n=== PLACE BID ===");
             System.out.println("Active Auctions:");
-            System.out.println("No.\tID\t\tProduct\t\tCurrent Bid\tBids\tTime Left");
+            System.out.printf("%-4s %-15s %-20s %-16s %-8s %-15s%n", 
+                "No.", "ID", "Product", "Current Bid", "Bids", "Time Left");
             System.out.println("=" .repeat(100));
             
             for (int i = 0; i < activeAuctions.size(); i++) {
@@ -545,10 +548,10 @@ public class BuyerServiceImpl implements BuyerService {
                 LocalDateTime now = LocalDateTime.now();
                 String timeLeft = getTimeLeft(now, auction.getEndTime());
                 
-                System.out.printf("%d.\t%-15s %-15s $%-12.2f %-6d %s%n",
+                System.out.printf("%-4d %-15s %-20s $%-15.2f %-8d %-15s%n",
                     i + 1,
                     auction.getId().toString().substring(0, 8) + "...",
-                    productName.length() > 15 ? productName.substring(0, 12) + "..." : productName,
+                    productName.length() > 18 ? productName.substring(0, 15) + "..." : productName,
                     auction.getCurrentHighestBid(),
                     auction.getTotalBids(),
                     timeLeft);
@@ -597,11 +600,20 @@ public class BuyerServiceImpl implements BuyerService {
                         buyer.addBidId(bid.getId());
                         userService.updateUser(buyer);
                         
+                        // Get updated auction to show new end time
+                        Auction updatedAuction = auctionService.findAuctionById(selectedAuction.getId().toString());
+                        
                         System.out.println("\nBid placed successfully!");
                         System.out.println("Bid ID: " + bid.getId());
                         System.out.println("Auction: " + (product != null ? product.getName() : "Unknown"));
                         System.out.println("Bid Amount: $" + String.format("%.2f", bidAmount));
                         System.out.println("Bid Time: " + InputUtils.formatDateTime(bid.getBidTime()));
+                        
+                        // Show the updated auction end time (time has been reset)
+                        if (updatedAuction != null) {
+                            System.out.println("⏰ Auction time has been extended!");
+                            System.out.println("New End Time: " + InputUtils.formatDateTime(updatedAuction.getEndTime()));
+                        }
                         
                     } else {
                         System.out.println("Failed to place bid.");
@@ -631,7 +643,8 @@ public class BuyerServiceImpl implements BuyerService {
                 return;
             }
             
-            System.out.println("Bid ID\t\tAuction\t\tProduct\t\tBid Amount\tWinning\tBid Time");
+            System.out.printf("%-15s %-15s %-20s %-14s %-12s %-20s%n", 
+                "Bid ID", "Auction", "Product", "Bid Amount", "Winning", "Bid Time");
             System.out.println("=" .repeat(120));
             
             for (Bid bid : bids) {
@@ -644,10 +657,10 @@ public class BuyerServiceImpl implements BuyerService {
                 
                 String productName = product != null ? product.getName() : "Unknown";
                 
-                System.out.printf("%-15s %-15s %-15s $%-10.2f %-8s %s%n",
+                System.out.printf("%-15s %-15s %-20s $%-14.2f %-12s %-20s%n",
                     bid.getId().toString().substring(0, 8) + "...",
                     auction != null ? auction.getId().toString().substring(0, 8) + "..." : "Unknown",
-                    productName.length() > 15 ? productName.substring(0, 12) + "..." : productName,
+                    productName.length() > 18 ? productName.substring(0, 15) + "..." : productName,
                     bid.getBidAmount(),
                     bid.isWinning() ? "YES" : "NO",
                     InputUtils.formatDateTime(bid.getBidTime()));

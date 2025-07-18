@@ -1,17 +1,16 @@
 package com.auction.services.impl;
 
-import com.auction.services.SellerService;
+import java.util.List;
+
+import com.auction.exceptions.DatabaseException;
+import com.auction.models.Product;
+import com.auction.models.Seller;
+import com.auction.models.Transaction;
 import com.auction.services.ProductService;
+import com.auction.services.SellerService;
 import com.auction.services.TransactionService;
 import com.auction.services.UserService;
-import com.auction.models.Seller;
-import com.auction.models.Product;
-import com.auction.models.Transaction;
-import com.auction.exceptions.DatabaseException;
 import com.auction.utils.InputUtils;
-import org.bson.types.ObjectId;
-
-import java.util.List;
 
 /**
  * Implementation of SellerService interface
@@ -100,14 +99,15 @@ public class SellerServiceImpl implements SellerService {
                 return;
             }
             
-            System.out.println("ID\t\tName\t\t\tCategory\t\tPrice\t\tCondition\tQuantity\tStatus\t\tDate Added");
-            System.out.println("=" .repeat(120));
+            System.out.printf("%-15s %-20s %-15s %-16s %-18s %-12s %-18s %-20s%n", 
+                "ID", "Name", "Category", "Price", "Condition", "Quantity", "Status", "Date Added");
+            System.out.println("=" .repeat(140));
             
             for (Product product : products) {
                 String status = product.isSold() ? "SOLD" : (product.isAvailable() ? "AVAILABLE" : "UNAVAILABLE");
-                System.out.printf("%-15s %-20s %-15s $%-10.2f %-15s %-8d %-15s %s%n",
+                System.out.printf("%-15s %-20s %-15s $%-15.2f %-18s %-12d %-18s %-20s%n",
                     product.getId().toString().substring(0, 8) + "...",
-                    product.getName().length() > 20 ? product.getName().substring(0, 17) + "..." : product.getName(),
+                    product.getName().length() > 18 ? product.getName().substring(0, 15) + "..." : product.getName(),
                     product.getCategory(),
                     product.getPrice(),
                     product.getCondition(),

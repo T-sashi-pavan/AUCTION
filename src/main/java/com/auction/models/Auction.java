@@ -1,7 +1,8 @@
 package com.auction.models;
 
-import org.bson.types.ObjectId;
 import java.time.LocalDateTime;
+
+import org.bson.types.ObjectId;
 
 /**
  * Auction POJO class representing auctions in the system
@@ -20,6 +21,7 @@ public class Auction {
     private String status; // PENDING, ACTIVE, COMPLETED, CANCELLED
     private LocalDateTime createdAt;
     private int totalBids;
+    private long durationMinutes; // Store original auction duration for time reset feature
     
     // Default constructor
     public Auction() {
@@ -146,6 +148,14 @@ public class Auction {
     
     public void setTotalBids(int totalBids) {
         this.totalBids = totalBids;
+    }
+    
+    public long getDurationMinutes() {
+        return durationMinutes;
+    }
+    
+    public void setDurationMinutes(long durationMinutes) {
+        this.durationMinutes = durationMinutes;
     }
     
     /**

@@ -1,27 +1,26 @@
 package com.auction.services.impl;
 
-import com.auction.services.AdminService;
-import com.auction.services.UserService;
-import com.auction.services.ProductService;
-import com.auction.services.AuctionService;
-import com.auction.services.TransactionService;
-import com.auction.models.User;
-import com.auction.models.Product;
-import com.auction.models.Auction;
-import com.auction.models.Transaction;
-import com.auction.exceptions.DatabaseException;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.bson.Document;
+
 import com.auction.database.DatabaseConnection;
+import com.auction.exceptions.DatabaseException;
+import com.auction.models.Auction;
+import com.auction.models.Product;
+import com.auction.models.Transaction;
+import com.auction.models.User;
+import com.auction.services.AdminService;
+import com.auction.services.AuctionService;
+import com.auction.services.ProductService;
+import com.auction.services.TransactionService;
+import com.auction.services.UserService;
 import com.auction.utils.InputUtils;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
-import org.bson.Document;
-import org.bson.types.ObjectId;
-
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.ArrayList;
-
-import static com.mongodb.client.model.Filters.*;
+import static com.mongodb.client.model.Filters.eq;
 
 /**
  * Implementation of AdminService interface
@@ -55,7 +54,7 @@ public class AdminServiceImpl implements AdminService {
             System.out.println("=" .repeat(120));
             
             for (User buyer : buyers) {
-                System.out.printf("%-15s %-15s %-20s %-25s %-15s %s%n",
+                System.out.printf("%-15s %-20s %-18s %-30s %-38s %-42s%n",
                     buyer.getId().toString().substring(0, 8) + "...",
                     buyer.getUsername(),
                     buyer.getFullName(),
@@ -71,7 +70,7 @@ public class AdminServiceImpl implements AdminService {
             System.out.println("=" .repeat(120));
             
             for (User seller : sellers) {
-                System.out.printf("%-15s %-15s %-20s %-25s %-15s %s%n",
+                System.out.printf("%-15s %-20s %-18s %-30s %-38s %-42s%n",
                     seller.getId().toString().substring(0, 8) + "...",
                     seller.getUsername(),
                     seller.getFullName(),
@@ -93,14 +92,15 @@ public class AdminServiceImpl implements AdminService {
             List<Product> products = productService.getAllProducts();
             
             System.out.println("\n=== ALL PRODUCTS ===");
-            System.out.println("ID\t\tName\t\t\tCategory\t\tPrice\t\tStatus\t\tDate Added");
-            System.out.println("=" .repeat(100));
+            System.out.printf("%-15s %-20s %-15s %-16s %-18s %-20s%n", 
+                "ID", "Name", "Category", "Price", "Status", "Date Added");
+            System.out.println("=" .repeat(120));
             
             for (Product product : products) {
                 String status = product.isSold() ? "SOLD" : (product.isAvailable() ? "AVAILABLE" : "UNAVAILABLE");
-                System.out.printf("%-15s %-20s %-15s $%-10.2f %-15s %s%n",
+                System.out.printf("%-15s %-20s %-15s $%-16f %-18s %-20s%n",
                     product.getId().toString().substring(0, 8) + "...",
-                    product.getName(),
+                    product.getName().length() > 18 ? product.getName().substring(0, 15) + "..." : product.getName(),
                     product.getCategory(),
                     product.getPrice(),
                     status,
@@ -127,15 +127,16 @@ public class AdminServiceImpl implements AdminService {
             
             System.out.println("\n=== CREATE NEW AUCTION ===");
             System.out.println("Available Products:");
-            System.out.println("No.\tID\t\tName\t\t\tCategory\t\tPrice");
-            System.out.println("=" .repeat(80));
+            System.out.printf("%-4s %-15s %-20s %-15s %-12s%n", 
+                "No.", "ID", "Name", "Category", "Price");
+            System.out.println("=" .repeat(90));
             
             for (int i = 0; i < availableProducts.size(); i++) {
                 Product product = availableProducts.get(i);
-                System.out.printf("%d.\t%-15s %-20s %-15s $%.2f%n",
+                System.out.printf("%-4d %-15s %-20s %-15s $%-11.2f%n",
                     i + 1,
                     product.getId().toString().substring(0, 8) + "...",
-                    product.getName(),
+                    product.getName().length() > 18 ? product.getName().substring(0, 15) + "..." : product.getName(),
                     product.getCategory(),
                     product.getPrice());
             }
@@ -150,7 +151,7 @@ public class AdminServiceImpl implements AdminService {
             Product selectedProduct = availableProducts.get(choice - 1);
             
             double startingPrice = InputUtils.readDouble("Enter starting price: $");
-            int durationHours = InputUtils.readInt("Enter auction duration (hours): ");
+            int durationMinutes = InputUtils.readInt("Enter auction duration (minutes): ");
             
             Auction auction = new Auction();
             auction.setProductId(selectedProduct.getId());
@@ -158,7 +159,8 @@ public class AdminServiceImpl implements AdminService {
             auction.setStartingPrice(startingPrice);
             auction.setCurrentHighestBid(startingPrice);
             auction.setStartTime(LocalDateTime.now());
-            auction.setEndTime(LocalDateTime.now().plusHours(durationHours));
+            auction.setEndTime(LocalDateTime.now().plusMinutes(durationMinutes));
+            auction.setDurationMinutes(durationMinutes); // Store original duration for time reset feature
             auction.setActive(true);
             auction.setStatus("ACTIVE");
             
@@ -171,7 +173,7 @@ public class AdminServiceImpl implements AdminService {
                 System.out.println("Auction ID: " + auction.getId());
                 System.out.println("Product: " + selectedProduct.getName());
                 System.out.println("Starting Price: $" + startingPrice);
-                System.out.println("Duration: " + durationHours + " hours");
+                System.out.println("Duration: " + durationMinutes + " minutes");
                 System.out.println("End Time: " + InputUtils.formatDateTime(auction.getEndTime()));
             } else {
                 System.out.println("Failed to create auction.");
@@ -188,16 +190,17 @@ public class AdminServiceImpl implements AdminService {
             List<Auction> auctions = auctionService.getAllAuctions();
             
             System.out.println("\n=== AUCTION HISTORY ===");
-            System.out.println("ID\t\tProduct\t\t\tStarting Price\tCurrent Bid\tStatus\t\tEnd Time");
-            System.out.println("=" .repeat(120));
+            System.out.printf("%-15s %-20s %-16s %-16s %-18s %-20s%n", 
+                "ID", "Product", "Starting Price", "Current Bid", "Status", "End Time");
+            System.out.println("=" .repeat(130));
             
             for (Auction auction : auctions) {
                 Product product = productService.findProductById(auction.getProductId().toString());
                 String productName = product != null ? product.getName() : "Unknown";
                 
-                System.out.printf("%-15s %-20s $%-12.2f $%-12.2f %-15s %s%n",
+                System.out.printf("%-15s %-20s $%-16f $%-16f %-18s %-20s%n",
                     auction.getId().toString().substring(0, 8) + "...",
-                    productName,
+                    productName.length() > 18 ? productName.substring(0, 15) + "..." : productName,
                     auction.getStartingPrice(),
                     auction.getCurrentHighestBid(),
                     auction.getStatus(),
@@ -229,7 +232,7 @@ public class AdminServiceImpl implements AdminService {
             System.out.println("=" .repeat(100));
             
             for (Product product : soldProducts) {
-                System.out.printf("%-15s %-20s %-15s $%-10.2f %s%n",
+                System.out.printf("%-15s %-20s %-18s $%-10.2f %s%n",
                     product.getId().toString().substring(0, 8) + "...",
                     product.getName(),
                     product.getCategory(),
