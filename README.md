@@ -119,9 +119,6 @@ AuctionSystem/
 - Service interfaces abstracting implementation details
 - Clean separation between interface and implementation
 
-### 5. **Composition**
-- Users contain lists of transactions, products, and bids
-- Complex objects built from simpler objects
 
 ## Database Schema
 

@@ -1,7 +1,8 @@
 package com.auction.models;
 
-import org.bson.types.ObjectId;
 import java.time.LocalDateTime;
+
+import org.bson.types.ObjectId;
 
 /**
  * Transaction POJO class representing transactions in the system
@@ -11,11 +12,11 @@ public class Transaction {
     private ObjectId buyerId;
     private ObjectId sellerId;
     private ObjectId productId;
-    private ObjectId auctionId; // null for direct purchases
+    private ObjectId auctionId; 
     private double amount;
-    private String transactionType; // PURCHASE, AUCTION_WIN, REFUND
+    private String transactionType; 
     private String paymentMethod;
-    private String status; // PENDING, COMPLETED, FAILED, REFUNDED
+    private String status; 
     private LocalDateTime transactionDate;
     private LocalDateTime completedDate;
     private String buyerName;

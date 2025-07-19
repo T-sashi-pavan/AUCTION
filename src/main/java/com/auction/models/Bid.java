@@ -1,11 +1,10 @@
 package com.auction.models;
 
-import org.bson.types.ObjectId;
 import java.time.LocalDateTime;
 
-/**
- * Bid POJO class representing bids in auctions
- */
+import org.bson.types.ObjectId;
+
+
 public class Bid {
     private ObjectId id;
     private ObjectId auctionId;

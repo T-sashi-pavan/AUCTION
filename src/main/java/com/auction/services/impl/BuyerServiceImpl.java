@@ -19,6 +19,7 @@ import com.auction.services.ProductService;
 import com.auction.services.TransactionService;
 import com.auction.services.UserService;
 import com.auction.utils.InputUtils;
+import com.auction.utils.WinnerAnnouncementUtils;
 
 /**
  * Implementation of BuyerService interface
@@ -634,6 +635,33 @@ public class BuyerServiceImpl implements BuyerService {
     @Override
     public void viewAuctionHistory(Buyer buyer) throws DatabaseException {
         try {
+            // Check for newly completed auctions and show winner announcements
+            List<Auction> newlyCompleted = auctionService.checkAndGetNewlyCompletedAuctions();
+            if (!newlyCompleted.isEmpty()) {
+                System.out.println("\n*** AUCTION RESULTS JUST IN! ***");
+                System.out.println("=".repeat(50));
+                
+                // Check if buyer won any of the newly completed auctions
+                boolean buyerWonAny = false;
+                for (Auction auction : newlyCompleted) {
+                    if (auction.getCurrentHighestBidderId() != null && 
+                        auction.getCurrentHighestBidderId().toString().equals(buyer.getId().toString())) {
+                        System.out.println("*** CONGRATULATIONS! YOU WON AN AUCTION! ***");
+                        WinnerAnnouncementUtils.displayWinnerAnnouncement(auction);
+                        buyerWonAny = true;
+                    } else {
+                        WinnerAnnouncementUtils.displaySimpleWinnerNotification(auction);
+                    }
+                }
+                
+                if (buyerWonAny) {
+                    System.out.println("\n*** Check your purchases to complete the transaction! ***");
+                }
+                
+                System.out.println("=".repeat(50));
+                InputUtils.pause();
+            }
+            
             List<Bid> bids = auctionService.getBidsByBidderId(buyer.getId().toString());
             
             System.out.println("\n=== AUCTION HISTORY ===");
@@ -672,9 +700,44 @@ public class BuyerServiceImpl implements BuyerService {
             long winningBids = bids.stream().filter(Bid::isWinning).count();
             System.out.println("Winning Bids: " + winningBids);
             
+            // Show personalized winner announcements for buyer's recent wins
+            List<Bid> winningBidsToShow = bids.stream()
+                .filter(Bid::isWinning)
+                .limit(3)
+                .collect(Collectors.toList());
+                
+            if (!winningBidsToShow.isEmpty()) {
+                System.out.println("\nWould you like to see details of your recent wins? (y/n)");
+                String choice = InputUtils.readString("Choice: ");
+                if (choice.equalsIgnoreCase("y")) {
+                    showBuyerWinDetails(winningBidsToShow);
+                }
+            }
+            
         } catch (Exception e) {
             throw new DatabaseException("Failed to view auction history: " + e.getMessage(), e);
         }
+    }
+    
+    /**
+     * Show detailed win information for buyer's winning bids
+     */
+    private void showBuyerWinDetails(List<Bid> winningBids) {
+        System.out.println("\n*** YOUR WINNING AUCTIONS ***");
+        System.out.println("=".repeat(60));
+        
+        for (Bid bid : winningBids) {
+            try {
+                Auction auction = auctionService.findAuctionById(bid.getAuctionId().toString());
+                if (auction != null) {
+                    WinnerAnnouncementUtils.displayWinnerAnnouncement(auction);
+                }
+            } catch (Exception e) {
+                System.err.println("Error displaying win details for bid: " + bid.getId());
+            }
+        }
+        
+        InputUtils.pause();
     }
     
     @Override

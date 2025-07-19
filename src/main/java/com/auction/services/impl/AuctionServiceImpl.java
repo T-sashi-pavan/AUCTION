@@ -288,6 +288,31 @@ public class AuctionServiceImpl implements AuctionService {
         }
     }
     
+    @Override
+    public List<Auction> checkAndGetNewlyCompletedAuctions() throws DatabaseException {
+        try {
+            MongoCollection<Document> collection = getAuctionCollection();
+            LocalDateTime now = LocalDateTime.now();
+            List<Auction> newlyCompleted = new ArrayList<>();
+            
+            // Find expired auctions that are still active
+            for (Document doc : collection.find(and(eq("isActive", true), lt("endTime", now)))) {
+                Auction auction = documentToAuction(doc);
+                newlyCompleted.add(auction);
+                
+                // Update auction status
+                auction.setActive(false);
+                auction.setCompleted(true);
+                auction.setStatus("COMPLETED");
+                updateAuction(auction);
+            }
+            
+            return newlyCompleted;
+        } catch (Exception e) {
+            throw new DatabaseException("Failed to check expired auctions: " + e.getMessage(), e);
+        }
+    }
+    
     /**
      * Converts Auction object to MongoDB Document
      */

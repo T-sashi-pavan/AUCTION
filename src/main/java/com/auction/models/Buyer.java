@@ -1,15 +1,16 @@
 package com.auction.models;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.bson.types.ObjectId;
+
 import com.auction.services.BuyerService;
 import com.auction.services.impl.BuyerServiceImpl;
 import com.auction.utils.InputUtils;
-import java.util.ArrayList;
-import java.util.List;
-import org.bson.types.ObjectId;
+import com.auction.utils.WinnerAnnouncementUtils;
 
-/**
- * Buyer class extending User - demonstrates inheritance
- */
+
 public class Buyer extends User {
     private List<ObjectId> purchaseIds;
     private List<ObjectId> transactionIds;
@@ -66,6 +67,9 @@ public class Buyer extends User {
     @Override
     public void handleActions() {
         boolean running = true;
+        
+        // Show winner announcements when buyer first logs in
+        WinnerAnnouncementUtils.showPendingWinnerAnnouncements("BUYER");
         
         while (running) {
             try {

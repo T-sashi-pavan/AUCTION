@@ -7,7 +7,9 @@ import com.auction.models.Admin;
 import com.auction.models.Buyer;
 import com.auction.models.Seller;
 import com.auction.models.User;
+import com.auction.services.AdminService;
 import com.auction.services.UserService;
+import com.auction.services.impl.AdminServiceImpl;
 import com.auction.services.impl.UserServiceImpl;
 import com.auction.utils.InputUtils;
 
@@ -18,9 +20,11 @@ import com.auction.utils.InputUtils;
 public class AuthenticationUI {
     
     private final UserService userService;
+    private final AdminService adminService;
     
     public AuthenticationUI() {
         this.userService = new UserServiceImpl();
+        this.adminService = new AdminServiceImpl();
     }
     
     /**
@@ -31,6 +35,9 @@ public class AuthenticationUI {
             // Initialize database connection and create indexes
             DatabaseConnection.getDatabase();
             DatabaseConnection.createIndexes();
+            
+            // Check if initial admin setup is required
+            checkInitialAdminSetup();
             
             showWelcomeScreen();
             
@@ -50,6 +57,9 @@ public class AuthenticationUI {
                             register();
                             break;
                         case 3:
+                            registerAdmin();
+                            break;
+                        case 4:
                             showAbout();
                             break;
                         case 0:
@@ -93,8 +103,9 @@ public class AuthenticationUI {
     private void showMainMenu() {
         System.out.println("\n=== AUTOMATED AUCTION SYSTEM ===");
         System.out.println("1. Login");
-        System.out.println("2. Register");
-        System.out.println("3. About");
+        System.out.println("2. Register (Buyer/Seller)");
+        System.out.println("3. Register as Admin");
+        System.out.println("4. About");
         System.out.println("0. Exit");
         System.out.println("=================================");
     }
@@ -182,7 +193,7 @@ public class AuthenticationUI {
             }
             
             String password = InputUtils.readPassword("Password: ");
-            String confirmPassword = InputUtils.readPasswordConfirmation(password);
+            InputUtils.readPasswordConfirmation(password);
             
             String firstName = InputUtils.readName("First Name: ", "First Name");
             String lastName = InputUtils.readName("Last Name: ", "Last Name");
@@ -288,30 +299,139 @@ public class AuthenticationUI {
     }
     
     /**
-     * Creates a default admin account if none exists
+     * Checks if initial admin setup is required and handles it
      */
-    public void createDefaultAdmin() {
+    private void checkInitialAdminSetup() {
         try {
-            // Check if admin already exists
-            User existingAdmin = userService.findUserByUsername("admin");
-            
-            if (existingAdmin == null) {
-                System.out.println("Creating default admin account...");
+            if (!adminService.hasAnyAdmin()) {
+                System.out.println("\n🚀 WELCOME TO AUTOMATED AUCTION SYSTEM!");
+                System.out.println("════════════════════════════════════════");
+                System.out.println("No admin account found in the system.");
+                System.out.println("You need to create an admin account to manage the system.");
+                System.out.println();
                 
-                Admin admin = new Admin("admin", "admin@auction.com", "admin123", 
-                                      "System", "Administrator", "1234567890");
+                String createAdmin = InputUtils.readString("Would you like to create an admin account now? (y/n): ");
                 
-                if (userService.registerUser(admin)) {
-                    System.out.println("Default admin account created successfully!");
-                    System.out.println("Username: admin");
-                    System.out.println("Password: admin123");
-                    System.out.println("Please change the default password after first login.");
+                if (createAdmin.equalsIgnoreCase("y")) {
+                    System.out.println("\n=== INITIAL ADMIN SETUP ===");
+                    registerAdminInternal(true);
                 } else {
-                    System.out.println("Failed to create default admin account.");
+                    System.out.println("You can create an admin account later from the main menu.");
                 }
+                
+                InputUtils.pause();
             }
         } catch (Exception e) {
-            System.err.println("Error creating default admin: " + e.getMessage());
+            System.err.println("Error checking admin setup: " + e.getMessage());
+            InputUtils.pause();
+        }
+    }
+    
+    /**
+     * Handles admin registration from main menu
+     */
+    private void registerAdmin() {
+        registerAdminInternal(false);
+    }
+    
+    /**
+     * Internal method to handle admin registration
+     */
+    private void registerAdminInternal(boolean isInitialSetup) {
+        try {
+            if (!isInitialSetup) {
+                System.out.println("\n=== ADMIN REGISTRATION ===");
+                
+                // Check if user really wants to register as admin
+                System.out.println("⚠️  IMPORTANT: Admin accounts have full system privileges.");
+                System.out.println("Only authorized personnel should register as administrators.");
+                System.out.println();
+                
+                String confirm = InputUtils.readString("Are you authorized to create an admin account? (yes/no): ");
+                if (!confirm.equalsIgnoreCase("yes")) {
+                    System.out.println("Admin registration cancelled.");
+                    InputUtils.pause();
+                    return;
+                }
+                
+                // Show current admin count
+                long adminCount = adminService.getAdminCount();
+                System.out.println("Current admin accounts in system: " + adminCount);
+                System.out.println();
+            }
+            
+            System.out.println("📝 Enter admin details:");
+            System.out.println("Note: All fields are required and will be validated.");
+            
+            String username;
+            while (true) {
+                username = InputUtils.readUsername("Admin Username: ");
+                
+                // Check if username already exists
+                if (userService.usernameExists(username)) {
+                    System.out.println("❌ Username already exists. Please choose a different username.");
+                    continue;
+                }
+                break;
+            }
+            
+            String email;
+            while (true) {
+                email = InputUtils.readEmail("Admin Email: ");
+                
+                // Check if email already exists
+                if (userService.emailExists(email)) {
+                    System.out.println("❌ Email already exists. Please choose a different email.");
+                    continue;
+                }
+                break;
+            }
+            
+            String password = InputUtils.readPassword("Admin Password: ");
+            InputUtils.readPasswordConfirmation(password);
+            
+            String firstName = InputUtils.readName("First Name: ", "First Name");
+            String lastName = InputUtils.readName("Last Name: ", "Last Name");
+            String phoneNumber = InputUtils.readPhoneNumber("Phone Number: ");
+            
+            System.out.println("\nAdmin details validated successfully!");
+            
+            // Create admin user object
+            Admin admin = new Admin(username, email, password, firstName, lastName, phoneNumber);
+            
+            // Register admin
+            if (userService.registerUser(admin)) {
+                System.out.println("\n✅ Admin registration successful!");
+                System.out.println("====================================");
+                System.out.println("Welcome to the system, " + admin.getFullName() + "!");
+                System.out.println("Username: " + username);
+                System.out.println("Role: Administrator");
+                System.out.println("You can now login with your credentials.");
+                
+                if (isInitialSetup) {
+                    System.out.println("\n🎉 System setup complete! You can now start using the auction system.");
+                }
+                
+                InputUtils.pause();
+                
+                // Ask if they want to login immediately
+                String loginNow = InputUtils.readString("\nWould you like to login now? (y/n): ");
+                if (loginNow.equalsIgnoreCase("y")) {
+                    User authenticatedUser = userService.authenticateUser(username, password);
+                    navigateToUserDashboard(authenticatedUser);
+                }
+                
+            } else {
+                System.out.println("❌ Admin registration failed. Please try again.");
+                InputUtils.pause();
+            }
+            
+        } catch (DatabaseException e) {
+            System.err.println("Admin registration failed: " + e.getMessage());
+            InputUtils.pause();
+        } catch (Exception e) {
+            System.err.println("Error during admin registration: " + e.getMessage());
+            InputUtils.pause();
         }
     }
 }

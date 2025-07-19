@@ -1,15 +1,14 @@
 package com.auction.database;
 
+import com.auction.exceptions.DatabaseException;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoDatabase;
-import com.auction.exceptions.DatabaseException;
 
 /**
  * MongoDB Atlas connection manager
  */
 public class DatabaseConnection {
-    // Default to local MongoDB - change this to your MongoDB Atlas connection string
     private static final String CONNECTION_STRING = System.getProperty("mongodb.uri", "mongodb://localhost:27017");
     private static final String DATABASE_NAME = "auction_system";
     
@@ -28,7 +27,6 @@ public class DatabaseConnection {
                 mongoClient = MongoClients.create(CONNECTION_STRING);
                 database = mongoClient.getDatabase(DATABASE_NAME);
                 
-                // Test the connection
                 database.runCommand(new org.bson.Document("ping", 1));
                 System.out.println("Connected to MongoDB successfully!");
                 
@@ -39,9 +37,7 @@ public class DatabaseConnection {
         return database;
     }
     
-    /**
-     * Closes the database connection
-     */
+  
     public static void closeConnection() {
         if (mongoClient != null) {
             mongoClient.close();
@@ -50,30 +46,23 @@ public class DatabaseConnection {
         }
     }
     
-    /**
-     * Creates indexes for better performance
-     */
+   
     public static void createIndexes() {
         try {
             MongoDatabase db = getDatabase();
             
-            // Create indexes for users collection
             db.getCollection("users").createIndex(new org.bson.Document("username", 1));
             db.getCollection("users").createIndex(new org.bson.Document("email", 1));
             
-            // Create indexes for products collection
             db.getCollection("products").createIndex(new org.bson.Document("category", 1));
             db.getCollection("products").createIndex(new org.bson.Document("sellerId", 1));
             
-            // Create indexes for auctions collection
             db.getCollection("auctions").createIndex(new org.bson.Document("productId", 1));
             db.getCollection("auctions").createIndex(new org.bson.Document("endTime", 1));
             
-            // Create indexes for bids collection
             db.getCollection("bids").createIndex(new org.bson.Document("auctionId", 1));
             db.getCollection("bids").createIndex(new org.bson.Document("bidderId", 1));
             
-            // Create indexes for transactions collection
             db.getCollection("transactions").createIndex(new org.bson.Document("buyerId", 1));
             db.getCollection("transactions").createIndex(new org.bson.Document("sellerId", 1));
             db.getCollection("transactions").createIndex(new org.bson.Document("transactionDate", 1));

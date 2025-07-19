@@ -17,7 +17,9 @@ import com.auction.services.AuctionService;
 import com.auction.services.ProductService;
 import com.auction.services.TransactionService;
 import com.auction.services.UserService;
+import com.auction.services.impl.UserServiceImpl;
 import com.auction.utils.InputUtils;
+import com.auction.utils.WinnerAnnouncementUtils;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import static com.mongodb.client.model.Filters.eq;
@@ -31,7 +33,7 @@ public class AdminServiceImpl implements AdminService {
     private final ProductService productService;
     private final AuctionService auctionService;
     private final TransactionService transactionService;
-    
+    //CONSTRUCTOR
     public AdminServiceImpl() {
         this.userService = new UserServiceImpl();
         this.productService = new ProductServiceImpl();
@@ -187,31 +189,100 @@ public class AdminServiceImpl implements AdminService {
     @Override
     public void viewAuctionHistory() throws DatabaseException {
         try {
+            // Check for newly completed auctions and show winner announcements
+            List<Auction> newlyCompleted = auctionService.checkAndGetNewlyCompletedAuctions();
+            if (!newlyCompleted.isEmpty()) {
+                System.out.println("\n*** AUCTION RESULTS JUST IN! ***");
+                System.out.println("=".repeat(50));
+                for (Auction auction : newlyCompleted) {
+                    WinnerAnnouncementUtils.displaySimpleWinnerNotification(auction);
+                }
+                System.out.println("=".repeat(50));
+                InputUtils.pause();
+            }
+            
             List<Auction> auctions = auctionService.getAllAuctions();
             
             System.out.println("\n=== AUCTION HISTORY ===");
-            System.out.printf("%-15s %-20s %-16s %-16s %-18s %-20s%n", 
-                "ID", "Product", "Starting Price", "Current Bid", "Status", "End Time");
+            System.out.printf("%-12s %-18s %-14s %-14s %-12s %-18s %-18s%n", 
+                "ID", "Product", "Start Price", "Current Bid", "Status", "Winner", "End Time");
             System.out.println("=" .repeat(130));
             
             for (Auction auction : auctions) {
                 Product product = productService.findProductById(auction.getProductId().toString());
                 String productName = product != null ? product.getName() : "Unknown";
                 
-                System.out.printf("%-15s %-20s $%-16f $%-16f %-18s %-20s%n",
+                // Get winner information if auction is completed
+                String winnerInfo = "N/A";
+                if (auction.getStatus().equals("COMPLETED") && auction.getCurrentHighestBidderId() != null) {
+                    try {
+                        User winner = userService.findUserById(auction.getCurrentHighestBidderId().toString());
+                        if (winner != null && auction.getCurrentHighestBid() > auction.getStartingPrice()) {
+                            winnerInfo = winner.getFirstName() + " " + winner.getLastName().substring(0, 1) + ".";
+                        } else {
+                            winnerInfo = "No Winner";
+                        }
+                    } catch (Exception e) {
+                        winnerInfo = "Unknown";
+                    }
+                }
+                
+                System.out.printf("%-12s %-18s $%-13.2f $%-13.2f %-12s %-18s %-18s%n",
                     auction.getId().toString().substring(0, 8) + "...",
-                    productName.length() > 18 ? productName.substring(0, 15) + "..." : productName,
+                    productName.length() > 16 ? productName.substring(0, 13) + "..." : productName,
                     auction.getStartingPrice(),
                     auction.getCurrentHighestBid(),
                     auction.getStatus(),
+                    winnerInfo,
                     InputUtils.formatDateTime(auction.getEndTime()));
             }
             
-            System.out.println("\nTotal Auctions: " + auctions.size());
+            // Show statistics
+            long activeAuctions = auctions.stream().filter(a -> "ACTIVE".equals(a.getStatus())).count();
+            long completedAuctions = auctions.stream().filter(a -> "COMPLETED".equals(a.getStatus())).count();
+            long pendingAuctions = auctions.stream().filter(a -> "PENDING".equals(a.getStatus())).count();
+            
+            System.out.println("\n" + "=".repeat(130));
+            System.out.println("📊 AUCTION STATISTICS:");
+            System.out.println("Total Auctions: " + auctions.size());
+            System.out.println("Active Auctions: " + activeAuctions);
+            System.out.println("Completed Auctions: " + completedAuctions);
+            System.out.println("Pending Auctions: " + pendingAuctions);
+            
+            // Offer to show detailed winner announcements for recently completed auctions
+            if (completedAuctions > 0) {
+                System.out.println("\nWould you like to see detailed winner announcements for recent auctions? (y/n)");
+                String choice = InputUtils.readString("Choice: ");
+                if (choice.equalsIgnoreCase("y")) {
+                    showDetailedWinnerAnnouncements(auctions);
+                }
+            }
             
         } catch (Exception e) {
             throw new DatabaseException("Failed to view auction history: " + e.getMessage(), e);
         }
+    }
+    
+    /**
+     * Show detailed winner announcements for completed auctions
+     */
+    private void showDetailedWinnerAnnouncements(List<Auction> auctions) {
+        System.out.println("\n*** DETAILED WINNER ANNOUNCEMENTS ***");
+        System.out.println("=".repeat(70));
+        
+        int count = 0;
+        for (Auction auction : auctions) {
+            if ("COMPLETED".equals(auction.getStatus()) && count < 5) { // Show last 5
+                WinnerAnnouncementUtils.displayWinnerAnnouncement(auction);
+                count++;
+            }
+        }
+        
+        if (count == 0) {
+            System.out.println("No completed auctions to display.");
+        }
+        
+        InputUtils.pause();
     }
     
     @Override
@@ -487,7 +558,6 @@ public class AdminServiceImpl implements AdminService {
      * Converts MongoDB Document to User object
      */
     private User documentToUser(Document doc) {
-        UserServiceImpl userService = new UserServiceImpl();
         // We'll use reflection or create a method to convert document to user
         // For now, we'll create a simple implementation
         
@@ -528,5 +598,25 @@ public class AdminServiceImpl implements AdminService {
         user.setActive(doc.getBoolean("isActive", true));
         
         return user;
+    }
+    
+    @Override
+    public boolean hasAnyAdmin() throws DatabaseException {
+        try {
+            List<User> admins = getUsersByRole("ADMIN");
+            return !admins.isEmpty();
+        } catch (Exception e) {
+            throw new DatabaseException("Failed to check for admin users: " + e.getMessage(), e);
+        }
+    }
+    
+    @Override
+    public long getAdminCount() throws DatabaseException {
+        try {
+            List<User> admins = getUsersByRole("ADMIN");
+            return admins.size();
+        } catch (Exception e) {
+            throw new DatabaseException("Failed to get admin count: " + e.getMessage(), e);
+        }
     }
 }

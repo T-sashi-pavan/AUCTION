@@ -3,6 +3,7 @@ package com.auction.models;
 import com.auction.services.AdminService;
 import com.auction.services.impl.AdminServiceImpl;
 import com.auction.utils.InputUtils;
+import com.auction.utils.WinnerAnnouncementUtils;
 
 /**
  * Admin class extending User - demonstrates inheritance
@@ -43,6 +44,9 @@ public class Admin extends User {
     @Override
     public void handleActions() {
         boolean running = true;
+        
+        // Show winner announcements when admin first logs in
+        WinnerAnnouncementUtils.showPendingWinnerAnnouncements("ADMIN");
         
         while (running) {
             try {

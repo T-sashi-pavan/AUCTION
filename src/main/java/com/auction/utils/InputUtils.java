@@ -30,13 +30,7 @@ public class InputUtils {
     private static final Pattern USERNAME_PATTERN = Pattern.compile(
         "^[a-zA-Z0-9_]{3,20}$"
     );
-    
-    /**
-     * Reads a validated string input from user (cannot be empty)
-     * @param prompt the prompt message
-     * @param fieldName the name of the field for error messages
-     * @return user input as string
-     */
+  
     public static String readRequiredString(String prompt, String fieldName) {
         while (true) {
             System.out.print(prompt);
@@ -53,8 +47,6 @@ public class InputUtils {
     
     /**
      * Reads a simple string input (basic method for compatibility)
-     * @param prompt the prompt message
-     * @return user input as string
      */
     public static String readString(String prompt) {
         System.out.print(prompt);

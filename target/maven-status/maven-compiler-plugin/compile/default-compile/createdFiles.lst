@@ -1,5 +1,7 @@
+com\auction\test\AdminRegistrationTest.class
 com\auction\models\Transaction.class
 com\auction\test\SoldProductsDebugTest.class
+com\auction\test\WinnerAnnouncementTest.class
 com\auction\database\DatabaseConnection.class
 com\auction\exceptions\DatabaseException.class
 com\auction\test\FixSoldProductsTest.class
@@ -17,11 +19,13 @@ com\auction\models\User.class
 com\auction\services\TransactionService.class
 com\auction\services\AdminService.class
 com\auction\test\BasicFunctionalityTest.class
+com\auction\utils\WinnerAnnouncementUtils.class
 com\auction\services\impl\UserServiceImpl.class
 com\auction\models\Admin.class
 com\auction\exceptions\AuctionException.class
 com\auction\services\UserService.class
 com\auction\test\AuthenticationTest.class
+com\auction\test\AdminAuctionHistoryTest.class
 com\auction\test\TableAlignmentTest.class
 com\auction\services\impl\TransactionServiceImpl.class
 com\auction\services\impl\BuyerServiceImpl.class

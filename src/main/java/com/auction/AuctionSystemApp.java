@@ -12,13 +12,9 @@ public class AuctionSystemApp {
         try {
             System.out.println("Starting Automated Auction System...");
             
-            // Create authentication UI
             AuthenticationUI authUI = new AuthenticationUI();
             
-            // Create default admin account if it doesn't exist
-            authUI.createDefaultAdmin();
-            
-            // Start the application
+            // Start the authentication UI - it will handle admin setup automatically
             authUI.start();
             
         } catch (Exception e) {

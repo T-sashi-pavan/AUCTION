@@ -18,10 +18,10 @@ public class Auction {
     private LocalDateTime endTime;
     private boolean isActive;
     private boolean isCompleted;
-    private String status; // PENDING, ACTIVE, COMPLETED, CANCELLED
+    private String status; 
     private LocalDateTime createdAt;
     private int totalBids;
-    private long durationMinutes; // Store original auction duration for time reset feature
+    private long durationMinutes; 
     
     // Default constructor
     public Auction() {
@@ -159,9 +159,30 @@ public class Auction {
     }
     
     /**
-     * Checks if auction is currently running
-     * @return true if auction is active and within time bounds
+     * Check if the auction has expired based on current time
      */
+    public boolean hasExpired() {
+        return endTime != null && LocalDateTime.now().isAfter(endTime);
+    }
+    
+    /**
+     * Get the highest bidder ID (null if no bids or auction expired without bids)
+     */
+    public ObjectId getWinnerId() {
+        if (hasExpired() && currentHighestBidderId != null && currentHighestBid > startingPrice) {
+            return currentHighestBidderId;
+        }
+        return null;
+    }
+    
+    /**
+     * Get winner name if auction is completed and has a winner
+     */
+    public String getWinnerName() {
+        // This would need to be populated from the database when loading auction data
+        return null; // To be implemented when fetching from database
+    }
+    
     public boolean isRunning() {
         LocalDateTime now = LocalDateTime.now();
         return isActive && now.isAfter(startTime) && now.isBefore(endTime);
