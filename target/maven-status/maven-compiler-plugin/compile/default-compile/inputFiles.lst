@@ -10,12 +10,10 @@ C:\Desktop\JAVA\New folder\AuctionSystem\src\main\java\com\auction\services\Auct
 C:\Desktop\JAVA\New folder\AuctionSystem\src\main\java\com\auction\test\FixSoldProductsTest.java
 C:\Desktop\JAVA\New folder\AuctionSystem\src\main\java\com\auction\services\SellerService.java
 C:\Desktop\JAVA\New folder\AuctionSystem\src\main\java\com\auction\services\impl\AdminServiceImpl.java
-C:\Desktop\JAVA\New folder\AuctionSystem\src\main\java\com\auction\utils\SerializationManager.java
 C:\Desktop\JAVA\New folder\AuctionSystem\src\main\java\com\auction\services\ProductService.java
 C:\Desktop\JAVA\New folder\AuctionSystem\src\main\java\com\auction\services\impl\AuctionServiceImpl.java
 C:\Desktop\JAVA\New folder\AuctionSystem\src\main\java\com\auction\services\impl\ProductServiceImpl.java
 C:\Desktop\JAVA\New folder\AuctionSystem\src\main\java\com\auction\exceptions\AuthenticationException.java
-C:\Desktop\JAVA\New folder\AuctionSystem\src\main\java\com\auction\utils\StreamUtilities.java
 C:\Desktop\JAVA\New folder\AuctionSystem\src\main\java\com\auction\utils\WinnerAnnouncementUtils.java
 C:\Desktop\JAVA\New folder\AuctionSystem\src\main\java\com\auction\services\impl\TransactionServiceImpl.java
 C:\Desktop\JAVA\New folder\AuctionSystem\src\main\java\com\auction\exceptions\DatabaseException.java
